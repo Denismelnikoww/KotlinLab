@@ -1,3 +1,4 @@
+// ui/screens/MainScreen.kt
 package com.example.music.ui.screens
 
 import androidx.compose.foundation.background
