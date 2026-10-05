@@ -36,5 +36,5 @@ fun SettingRowIcon(title: String, icon: ImageVector) {
     ) {
         Text(title, modifier = Modifier.weight(1f), color = Color.Black)
         Icon(icon, contentDescription = null, tint = Color.Gray)
-    }.
+    }
 }
