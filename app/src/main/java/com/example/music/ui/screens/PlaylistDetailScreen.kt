@@ -31,9 +31,9 @@ import com.example.music.data.repository.MusicRepository
 import com.example.music.ui.components.BackHeader
 
 @Composable
-fun PlaylistDetailScreen(navController: NavController, playlistId: Int) {
-    val playlist = MusicRepository.allPlaylists.getOrNull(playlistId)
-    val tracks = MusicRepository.playlistTracks[playlistId] ?: emptyList()
+fun PlaylistDetailScreen(navController: NavController, playlistId: Long) {
+    val playlist = MusicRepository.allPlaylists.find { it.id == playlistId }
+    val tracks = playlist?.let { MusicRepository.playlistTracks[it.collectionId] } ?: emptyList()
 
     Column(
         modifier = Modifier

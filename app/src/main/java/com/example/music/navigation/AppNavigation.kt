@@ -20,7 +20,7 @@ fun AppNavigation() {
         composable("search") { SearchScreen(navController) }
         composable("playlists") { PlaylistsScreen(navController) }
         composable("playlist/{playlistId}") { backStackEntry ->
-            val playlistId = backStackEntry.arguments?.getString("playlistId")?.toIntOrNull() ?: 0
+            val playlistId = backStackEntry.arguments?.getString("playlistId")?.toLongOrNull() ?: 0L
             PlaylistDetailScreen(navController, playlistId)
         }
         composable("favorites") { FavoritesScreen(navController) }
