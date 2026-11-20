@@ -2,7 +2,6 @@ package com.example.music.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,7 +19,6 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -45,6 +43,7 @@ fun PlaylistDetailScreen(
     viewModel: PlaylistDetailViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val title = (state as? PlaylistDetailUiState.Success)?.playlist?.name ?: "Плейлист"
 
     Column(
         modifier = Modifier
@@ -52,7 +51,7 @@ fun PlaylistDetailScreen(
             .background(Color.White)
             .padding(16.dp)
     ) {
-        BackHeader(viewModel.playlist?.name ?: "Плейлист", navController)
+        BackHeader(title, navController)
         Spacer(modifier = Modifier.height(16.dp))
         Box(
             modifier = Modifier
@@ -63,19 +62,27 @@ fun PlaylistDetailScreen(
                 PlaylistDetailUiState.Loading -> CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
                 )
-                PlaylistDetailUiState.Empty -> Text(
-                    "В плейлисте пока нет треков",
+                PlaylistDetailUiState.NotFound -> Text(
+                    "Плейлист не найден",
                     modifier = Modifier.align(Alignment.Center),
                     color = Color.Gray
                 )
-                is PlaylistDetailUiState.Error -> ErrorContent(
-                    message = currentState.message,
-                    onRetry = viewModel::load
-                )
-                is PlaylistDetailUiState.Success -> TrackList(
-                    tracks = currentState.tracks,
-                    onTrackClick = { track -> navController.navigate("player/${track.id}") }
-                )
+                is PlaylistDetailUiState.Success -> {
+                    if (currentState.tracks.isEmpty()) {
+                        Text(
+                            "В плейлисте пока нет треков",
+                            modifier = Modifier.align(Alignment.Center),
+                            color = Color.Gray
+                        )
+                    } else {
+                        TrackList(
+                            tracks = currentState.tracks,
+                            onTrackClick = { track ->
+                                navController.navigate("player/${track.id}")
+                            }
+                        )
+                    }
+                }
             }
         }
     }
@@ -126,23 +133,6 @@ private fun TrackList(
                 }
                 Text(track.duration, fontSize = 12.sp, color = Color.Gray)
             }
-        }
-    }
-}
-
-@Composable
-private fun ErrorContent(
-    message: String,
-    onRetry: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(message, color = Color.Gray)
-        TextButton(onClick = onRetry) {
-            Text("Повторить")
         }
     }
 }
