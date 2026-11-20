@@ -19,9 +19,8 @@ fun AppNavigation() {
         composable("main") { MainScreen(navController) }
         composable("search") { SearchScreen(navController) }
         composable("playlists") { PlaylistsScreen(navController) }
-        composable("playlist/{playlistId}") { backStackEntry ->
-            val playlistId = backStackEntry.arguments?.getString("playlistId")?.toLongOrNull() ?: 0L
-            PlaylistDetailScreen(navController, playlistId)
+        composable("playlist/{playlistId}") {
+            PlaylistDetailScreen(navController)
         }
         composable("favorites") { FavoritesScreen(navController) }
         composable("settings") { SettingsScreen(navController) }
