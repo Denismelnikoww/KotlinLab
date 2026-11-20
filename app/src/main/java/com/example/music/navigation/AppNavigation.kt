@@ -24,6 +24,6 @@ fun AppNavigation() {
         }
         composable("favorites") { FavoritesScreen(navController) }
         composable("settings") { SettingsScreen(navController) }
-        composable("player") { PlayerScreen(navController) }
+        composable("player/{trackId}") { PlayerScreen(navController) }
     }
 }

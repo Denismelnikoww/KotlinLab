@@ -74,7 +74,7 @@ fun PlaylistDetailScreen(
                 )
                 is PlaylistDetailUiState.Success -> TrackList(
                     tracks = currentState.tracks,
-                    onTrackClick = { navController.navigate("player") }
+                    onTrackClick = { track -> navController.navigate("player/${track.id}") }
                 )
             }
         }
@@ -84,14 +84,14 @@ fun PlaylistDetailScreen(
 @Composable
 private fun TrackList(
     tracks: List<Track>,
-    onTrackClick: () -> Unit
+    onTrackClick: (Track) -> Unit
 ) {
     LazyColumn {
         items(tracks, key = { it.id }) { track ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(onClick = onTrackClick)
+                    .clickable { onTrackClick(track) }
                     .padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {

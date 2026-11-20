@@ -92,7 +92,7 @@ fun MainScreen(
                 )
                 is MainUiState.Success -> SectionsList(
                     sections = currentState.sections,
-                    onTrackClick = { navController.navigate("player") }
+                    onTrackClick = { track -> navController.navigate("player/${track.id}") }
                 )
             }
         }
@@ -102,7 +102,7 @@ fun MainScreen(
 @Composable
 private fun SectionsList(
     sections: List<MainSection>,
-    onTrackClick: () -> Unit
+    onTrackClick: (Track) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -137,12 +137,12 @@ private fun SectionsList(
 @Composable
 private fun TrackCard(
     track: Track,
-    onClick: () -> Unit
+    onClick: (Track) -> Unit
 ) {
     Column(
         modifier = Modifier
             .width(140.dp)
-            .clickable(onClick = onClick)
+            .clickable { onClick(track) }
     ) {
         Box(
             modifier = Modifier

@@ -94,7 +94,7 @@ fun SearchScreen(
                 SearchResults(
                     state = state,
                     onRetry = viewModel::retry,
-                    onTrackClick = { navController.navigate("player") }
+                    onTrackClick = { track -> navController.navigate("player/${track.id}") }
                 )
             }
         }
@@ -131,7 +131,7 @@ private fun SearchHistory(
 private fun SearchResults(
     state: SearchUiState,
     onRetry: () -> Unit,
-    onTrackClick: () -> Unit
+    onTrackClick: (Track) -> Unit
 ) {
     when (state) {
         SearchUiState.Idle -> MessageContent("Введите минимум 2 символа")
@@ -145,14 +145,14 @@ private fun SearchResults(
 @Composable
 private fun TrackList(
     tracks: List<Track>,
-    onTrackClick: () -> Unit
+    onTrackClick: (Track) -> Unit
 ) {
     LazyColumn {
         items(tracks, key = { it.id }) { track ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(onClick = onTrackClick)
+                    .clickable { onTrackClick(track) }
                     .padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
