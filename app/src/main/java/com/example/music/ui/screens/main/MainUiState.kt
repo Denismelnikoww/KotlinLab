@@ -1,6 +1,6 @@
 package com.example.music.ui.screens.main
 
-import com.example.music.data.models.Track
+import com.example.music.domain.models.Track
 
 data class MainSection(
     val title: String,

@@ -1,6 +1,6 @@
 package com.example.music.ui.screens.playlistdetail
 
-import com.example.music.data.models.Track
+import com.example.music.domain.models.Track
 
 sealed interface PlaylistDetailUiState {
     data object Loading : PlaylistDetailUiState

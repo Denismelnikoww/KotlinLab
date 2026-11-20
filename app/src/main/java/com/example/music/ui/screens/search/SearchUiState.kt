@@ -1,6 +1,6 @@
 package com.example.music.ui.screens.search
 
-import com.example.music.data.models.Track
+import com.example.music.domain.models.Track
 
 sealed interface SearchUiState {
     data object Idle : SearchUiState

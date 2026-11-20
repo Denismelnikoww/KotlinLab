@@ -3,7 +3,7 @@ package com.example.music.ui.screens.playlistdetail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.music.data.models.Playlist
+import com.example.music.domain.models.Playlist
 import com.example.music.data.repository.ITunesRepository
 import com.example.music.data.repository.MusicRepository
 import kotlinx.coroutines.Job
@@ -33,7 +33,7 @@ class PlaylistDetailViewModel(
     }
 
     fun load() {
-        val collectionId = playlist?.collectionId
+        val collectionId = MusicRepository.playlistCollectionIds[playlistId]
         if (collectionId == null) {
             _uiState.value = PlaylistDetailUiState.Error(ERROR_MESSAGE)
             return

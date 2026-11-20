@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.music.data.models.Track
+import com.example.music.domain.models.Track
 import com.example.music.ui.components.BackHeader
 import com.example.music.ui.screens.playlistdetail.PlaylistDetailUiState
 import com.example.music.ui.screens.playlistdetail.PlaylistDetailViewModel

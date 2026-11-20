@@ -1,6 +1,6 @@
 package com.example.music.data.repository
 
-import com.example.music.data.models.Track
+import com.example.music.domain.models.Track
 import com.example.music.data.network.ApiClient
 import com.example.music.data.network.ITunesApi
 import com.example.music.data.network.mappers.toTrack

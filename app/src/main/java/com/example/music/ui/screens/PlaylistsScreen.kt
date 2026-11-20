@@ -66,7 +66,7 @@ fun PlaylistsScreen(navController: NavController) {
                         }
                         Column(modifier = Modifier.padding(start = 12.dp)) {
                             Text(playlist.name, fontWeight = FontWeight.Bold, color = Color.Black)
-                            Text(playlist.count, fontSize = 12.sp, color = Color.Gray)
+                            Text("${playlist.trackCount} треков", fontSize = 12.sp, color = Color.Gray)
                         }
                     }
                 }
