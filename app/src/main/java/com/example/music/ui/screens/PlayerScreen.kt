@@ -14,10 +14,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -69,14 +71,20 @@ fun PlayerScreen(
                     message = currentState.message,
                     onRetry = viewModel::load
                 )
-                is PlayerUiState.Success -> PlayerContent(track = currentState.track)
+                is PlayerUiState.Success -> PlayerContent(
+                    track = currentState.track,
+                    onToggleFavorite = viewModel::toggleFavorite
+                )
             }
         }
     }
 }
 
 @Composable
-private fun PlayerContent(track: Track) {
+private fun PlayerContent(
+    track: Track,
+    onToggleFavorite: () -> Unit
+) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -124,8 +132,24 @@ private fun PlayerContent(track: Track) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Icon(Icons.Default.Add, contentDescription = null, tint = Color.Gray)
-            Icon(Icons.Default.FavoriteBorder, contentDescription = null, tint = Color.Gray)
+            IconButton(onClick = { }) {
+                Icon(Icons.Default.Add, contentDescription = null, tint = Color.Gray)
+            }
+            IconButton(onClick = onToggleFavorite) {
+                Icon(
+                    imageVector = if (track.isFavorite) {
+                        Icons.Default.Favorite
+                    } else {
+                        Icons.Default.FavoriteBorder
+                    },
+                    contentDescription = if (track.isFavorite) {
+                        "Убрать из избранного"
+                    } else {
+                        "Добавить в избранное"
+                    },
+                    tint = if (track.isFavorite) Color(0xFFE91E63) else Color.Gray
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
