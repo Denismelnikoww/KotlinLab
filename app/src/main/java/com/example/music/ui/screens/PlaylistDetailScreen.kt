@@ -2,7 +2,6 @@ package com.example.music.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,8 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -34,7 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.music.data.models.Track
+import com.example.music.domain.models.Track
 import com.example.music.ui.components.BackHeader
 import com.example.music.ui.screens.playlistdetail.PlaylistDetailUiState
 import com.example.music.ui.screens.playlistdetail.PlaylistDetailViewModel
@@ -45,14 +44,15 @@ fun PlaylistDetailScreen(
     viewModel: PlaylistDetailViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val title = (state as? PlaylistDetailUiState.Success)?.playlist?.name ?: "Плейлист"
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
-        BackHeader(viewModel.playlist?.name ?: "Плейлист", navController)
+        BackHeader(title, navController)
         Spacer(modifier = Modifier.height(16.dp))
         Box(
             modifier = Modifier
@@ -63,19 +63,27 @@ fun PlaylistDetailScreen(
                 PlaylistDetailUiState.Loading -> CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
                 )
-                PlaylistDetailUiState.Empty -> Text(
-                    "В плейлисте пока нет треков",
+                PlaylistDetailUiState.NotFound -> Text(
+                    "Плейлист не найден",
                     modifier = Modifier.align(Alignment.Center),
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                is PlaylistDetailUiState.Error -> ErrorContent(
-                    message = currentState.message,
-                    onRetry = viewModel::load
-                )
-                is PlaylistDetailUiState.Success -> TrackList(
-                    tracks = currentState.tracks,
-                    onTrackClick = { track -> navController.navigate("player/${track.id}") }
-                )
+                is PlaylistDetailUiState.Success -> {
+                    if (currentState.tracks.isEmpty()) {
+                        Text(
+                            "В плейлисте пока нет треков",
+                            modifier = Modifier.align(Alignment.Center),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        TrackList(
+                            tracks = currentState.tracks,
+                            onTrackClick = { track ->
+                                navController.navigate("player/${track.id}")
+                            }
+                        )
+                    }
+                }
             }
         }
     }
@@ -112,37 +120,24 @@ private fun TrackList(
                     Text(
                         track.title,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onBackground,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         track.artist,
                         fontSize = 12.sp,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                Text(track.duration, fontSize = 12.sp, color = Color.Gray)
+                Text(
+                    track.duration,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-        }
-    }
-}
-
-@Composable
-private fun ErrorContent(
-    message: String,
-    onRetry: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(message, color = Color.Gray)
-        TextButton(onClick = onRetry) {
-            Text("Повторить")
         }
     }
 }

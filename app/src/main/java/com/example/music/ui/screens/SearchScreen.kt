@@ -22,12 +22,12 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.music.data.models.Track
+import com.example.music.domain.models.Track
 import com.example.music.ui.components.BackHeader
 import com.example.music.ui.screens.search.SearchUiState
 import com.example.music.ui.screens.search.SearchViewModel
@@ -53,13 +53,13 @@ fun SearchScreen(
     viewModel: SearchViewModel = viewModel()
 ) {
     var query by remember { mutableStateOf("") }
-    val history = remember { mutableStateListOf("Yesterday", "Let It Be", "Hey Jude") }
+    val history by viewModel.history.collectAsStateWithLifecycle()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
         BackHeader("Поиск", navController)
@@ -85,10 +85,11 @@ fun SearchScreen(
             if (query.isBlank()) {
                 SearchHistory(
                     history = history,
-                    onQuerySelected = {
-                        query = it
-                        viewModel.onQueryChange(it)
-                    }
+                    onQuerySelected = { selected ->
+                        query = selected
+                        viewModel.onQuerySelected(selected)
+                    },
+                    onClear = viewModel::clearHistory
                 )
             } else {
                 SearchResults(
@@ -104,23 +105,43 @@ fun SearchScreen(
 @Composable
 private fun SearchHistory(
     history: List<String>,
-    onQuerySelected: (String) -> Unit
+    onQuerySelected: (String) -> Unit,
+    onClear: () -> Unit
 ) {
     Column {
-        Text("История поиска", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("История поиска", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            if (history.isNotEmpty()) {
+                TextButton(onClick = onClear) {
+                    Text("Очистить")
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(12.dp))
-        LazyColumn {
-            items(history) { item ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onQuerySelected(item) }
-                        .padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.History, contentDescription = null, tint = Color.Gray)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(item, color = Color.Black, fontSize = 16.sp)
+        if (history.isEmpty()) {
+            Text("История поиска пуста", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            LazyColumn {
+                items(history) { item ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onQuerySelected(item) }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.History,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(item, color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp)
+                    }
                 }
             }
         }
@@ -173,19 +194,23 @@ private fun TrackList(
                     Text(
                         track.title,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onBackground,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         track.artist,
                         fontSize = 12.sp,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                Text(track.duration, fontSize = 12.sp, color = Color.Gray)
+                Text(
+                    track.duration,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
@@ -207,7 +232,7 @@ private fun MessageContent(message: String) {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(message, color = Color.Gray)
+        Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -221,7 +246,7 @@ private fun ErrorContent(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(message, color = Color.Gray)
+        Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
         TextButton(onClick = onRetry) {
             Text("Повторить")
         }

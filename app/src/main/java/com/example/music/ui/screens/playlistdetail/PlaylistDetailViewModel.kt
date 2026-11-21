@@ -1,61 +1,41 @@
 package com.example.music.ui.screens.playlistdetail
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.music.data.models.Playlist
-import com.example.music.data.repository.ITunesRepository
-import com.example.music.data.repository.MusicRepository
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.example.music.MusicApp
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 class PlaylistDetailViewModel(
+    application: Application,
     savedStateHandle: SavedStateHandle
-) : ViewModel() {
+) : AndroidViewModel(application) {
 
-    private val repository = ITunesRepository()
+    private val repository = (application as MusicApp).container.playlistsRepository
 
     private val playlistId: Long =
         savedStateHandle.get<String>(PLAYLIST_ID_KEY)?.toLongOrNull() ?: 0L
 
-    val playlist: Playlist? = MusicRepository.allPlaylists.find { it.id == playlistId }
-
-    private val _uiState = MutableStateFlow<PlaylistDetailUiState>(PlaylistDetailUiState.Loading)
-    val uiState: StateFlow<PlaylistDetailUiState> = _uiState.asStateFlow()
-
-    private var loadJob: Job? = null
-
-    init {
-        load()
-    }
-
-    fun load() {
-        val collectionId = playlist?.collectionId
-        if (collectionId == null) {
-            _uiState.value = PlaylistDetailUiState.Error(ERROR_MESSAGE)
-            return
+    val uiState: StateFlow<PlaylistDetailUiState> = repository.observePlaylist(playlistId)
+        .map { details ->
+            if (details == null) {
+                PlaylistDetailUiState.NotFound
+            } else {
+                PlaylistDetailUiState.Success(details.playlist, details.tracks)
+            }
         }
-        loadJob?.cancel()
-        loadJob = viewModelScope.launch {
-            _uiState.value = PlaylistDetailUiState.Loading
-            _uiState.value = repository.getPlaylistTracks(collectionId).fold(
-                onSuccess = { tracks ->
-                    if (tracks.isEmpty()) {
-                        PlaylistDetailUiState.Empty
-                    } else {
-                        PlaylistDetailUiState.Success(tracks)
-                    }
-                },
-                onFailure = { PlaylistDetailUiState.Error(ERROR_MESSAGE) }
-            )
-        }
-    }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+            PlaylistDetailUiState.Loading
+        )
 
     private companion object {
         const val PLAYLIST_ID_KEY = "playlistId"
-        const val ERROR_MESSAGE = "Не удалось загрузить треки. Проверьте подключение к интернету"
+        const val STOP_TIMEOUT_MS = 5_000L
     }
 }
