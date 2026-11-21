@@ -6,12 +6,16 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.music.MusicApp
 import com.example.music.data.repository.ITunesRepository
+import com.example.music.domain.models.Playlist
 import com.example.music.domain.models.Track
+import com.example.music.domain.repository.PlaylistsRepository
 import com.example.music.domain.repository.TracksRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class PlayerViewModel(
@@ -22,6 +26,9 @@ class PlayerViewModel(
     private val tracksRepository: TracksRepository =
         (application as MusicApp).container.tracksRepository
 
+    private val playlistsRepository: PlaylistsRepository =
+        (application as MusicApp).container.playlistsRepository
+
     private val iTunesRepository = ITunesRepository()
 
     private val trackId: Long =
@@ -29,6 +36,9 @@ class PlayerViewModel(
 
     private val _uiState = MutableStateFlow<PlayerUiState>(PlayerUiState.Loading)
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
+
+    val playlists: StateFlow<List<Playlist>> = playlistsRepository.observePlaylists()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyList())
 
     private var track: Track? = null
     private var loadJob: Job? = null
@@ -63,6 +73,22 @@ class PlayerViewModel(
         }
     }
 
+    fun addTrackToPlaylist(playlistId: Long) {
+        val currentTrack = track ?: return
+        viewModelScope.launch {
+            playlistsRepository.addTrackToPlaylist(playlistId, currentTrack)
+        }
+    }
+
+    fun createPlaylistWithTrack(name: String, description: String) {
+        val currentTrack = track ?: return
+        if (name.isBlank()) return
+        viewModelScope.launch {
+            val playlistId = playlistsRepository.createPlaylist(name, description)
+            playlistsRepository.addTrackToPlaylist(playlistId, currentTrack)
+        }
+    }
+
     private fun observeFavorite() {
         favoriteJob?.cancel()
         favoriteJob = viewModelScope.launch {
@@ -77,6 +103,7 @@ class PlayerViewModel(
 
     private companion object {
         const val TRACK_ID_KEY = "trackId"
+        const val STOP_TIMEOUT_MS = 5_000L
         const val ERROR_MESSAGE = "Не удалось загрузить трек. Проверьте подключение к интернету"
     }
 }

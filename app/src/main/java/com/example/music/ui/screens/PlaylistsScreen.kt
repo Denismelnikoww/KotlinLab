@@ -17,12 +17,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +37,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.music.ui.components.BackHeader
+import com.example.music.ui.components.CreatePlaylistDialog
+import com.example.music.ui.components.trackCountText
 import com.example.music.ui.screens.playlists.PlaylistsViewModel
 
 @Composable
@@ -126,55 +125,4 @@ fun PlaylistsScreen(
             }
         )
     }
-}
-
-@Composable
-private fun CreatePlaylistDialog(
-    onDismiss: () -> Unit,
-    onCreate: (String, String) -> Unit
-) {
-    var name by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Новый плейлист") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Название") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Описание") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onCreate(name, description) },
-                enabled = name.isNotBlank()
-            ) {
-                Text("Создать")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Отмена")
-            }
-        }
-    )
-}
-
-private fun trackCountText(count: Int): String = when {
-    count % 10 == 1 && count % 100 != 11 -> "$count трек"
-    count % 10 in 2..4 && count % 100 !in 12..14 -> "$count трека"
-    else -> "$count треков"
 }
