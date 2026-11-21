@@ -50,6 +50,7 @@ import com.example.music.domain.models.Playlist
 import com.example.music.domain.models.Track
 import com.example.music.ui.components.BackHeader
 import com.example.music.ui.components.CreatePlaylistDialog
+import com.example.music.ui.components.TrackArtwork
 import com.example.music.ui.components.trackCountText
 import com.example.music.ui.screens.player.PlayerUiState
 import com.example.music.ui.screens.player.PlayerViewModel
@@ -205,20 +206,12 @@ private fun PlayerContent(
     ) {
         Spacer(modifier = Modifier.height(32.dp))
 
-        Box(
-            modifier = Modifier
-                .size(280.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color(0xFFE91E63)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Default.MusicNote,
-                contentDescription = null,
-                modifier = Modifier.size(100.dp),
-                tint = Color.White
-            )
-        }
+        TrackArtwork(
+            artworkUrl = track.artworkUrl,
+            size = 280.dp,
+            cornerRadius = 8.dp,
+            iconSize = 100.dp
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
 
