@@ -21,15 +21,19 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +47,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -52,8 +59,10 @@ import com.example.music.ui.components.BackHeader
 import com.example.music.ui.components.CreatePlaylistDialog
 import com.example.music.ui.components.TrackArtwork
 import com.example.music.ui.components.trackCountText
+import com.example.music.ui.screens.player.PlaybackUiState
 import com.example.music.ui.screens.player.PlayerUiState
 import com.example.music.ui.screens.player.PlayerViewModel
+import java.util.Locale
 
 @Composable
 fun PlayerScreen(
@@ -61,9 +70,21 @@ fun PlayerScreen(
     viewModel: PlayerViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val playback by viewModel.playbackState.collectAsStateWithLifecycle()
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
     var showPlaylistSheet by remember { mutableStateOf(false) }
     var showCreateDialog by remember { mutableStateOf(false) }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                viewModel.pause()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     Column(
         modifier = Modifier
@@ -90,8 +111,11 @@ fun PlayerScreen(
                 )
                 is PlayerUiState.Success -> PlayerContent(
                     track = currentState.track,
+                    playback = playback,
                     onToggleFavorite = viewModel::toggleFavorite,
-                    onAddToPlaylist = { showPlaylistSheet = true }
+                    onAddToPlaylist = { showPlaylistSheet = true },
+                    onTogglePlayPause = viewModel::togglePlayPause,
+                    onSeek = viewModel::seekTo
                 )
             }
         }
@@ -197,8 +221,11 @@ private fun AddToPlaylistSheet(
 @Composable
 private fun PlayerContent(
     track: Track,
+    playback: PlaybackUiState,
     onToggleFavorite: () -> Unit,
-    onAddToPlaylist: () -> Unit
+    onAddToPlaylist: () -> Unit,
+    onTogglePlayPause: () -> Unit,
+    onSeek: (Long) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -235,6 +262,14 @@ private fun PlayerContent(
 
         Spacer(modifier = Modifier.weight(1f))
 
+        PlaybackControls(
+            playback = playback,
+            onTogglePlayPause = onTogglePlayPause,
+            onSeek = onSeek
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -268,23 +303,96 @@ private fun PlayerContent(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
 
+@Composable
+private fun PlaybackControls(
+    playback: PlaybackUiState,
+    onTogglePlayPause: () -> Unit,
+    onSeek: (Long) -> Unit
+) {
+    if (!playback.hasPreview) {
+        Text(
+            "Предпрослушивание недоступно",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 14.sp
+        )
+        return
+    }
+    if (playback.hasError) {
+        Text(
+            "Не удалось воспроизвести фрагмент",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 14.sp
+        )
+        return
+    }
+
+    var dragPosition by remember { mutableStateOf<Float?>(null) }
+    val duration = playback.durationMs.coerceAtLeast(1L)
+    val progress = (dragPosition ?: (playback.positionMs.toFloat() / duration)).coerceIn(0f, 1f)
+    val displayedPosition = (progress * duration).toLong()
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Slider(
+            value = progress,
+            onValueChange = { dragPosition = it },
+            onValueChangeFinished = {
+                dragPosition?.let { onSeek((it * duration).toLong()) }
+                dragPosition = null
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                "Длительность",
+                formatPlaybackTime(displayedPosition),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 14.sp
+                fontSize = 12.sp
             )
             Text(
-                track.duration,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontSize = 14.sp
+                formatPlaybackTime(playback.durationMs),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 12.sp
             )
         }
+        Spacer(modifier = Modifier.height(8.dp))
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            IconButton(
+                onClick = onTogglePlayPause,
+                modifier = Modifier.size(56.dp)
+            ) {
+                if (playback.isBuffering) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(28.dp),
+                        strokeWidth = 3.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = if (playback.isPlaying) {
+                            Icons.Default.Pause
+                        } else {
+                            Icons.Default.PlayArrow
+                        },
+                        contentDescription = if (playback.isPlaying) "Пауза" else "Воспроизвести",
+                        modifier = Modifier.size(44.dp),
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            }
+        }
     }
+}
+
+private fun formatPlaybackTime(positionMs: Long): String {
+    val totalSeconds = (positionMs / 1000).coerceAtLeast(0)
+    return String.format(Locale.US, "%d:%02d", totalSeconds / 60, totalSeconds % 60)
 }
 
 @Composable
