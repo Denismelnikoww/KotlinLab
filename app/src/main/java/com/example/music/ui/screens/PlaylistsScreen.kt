@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,7 +53,7 @@ fun PlaylistsScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -62,7 +63,7 @@ fun PlaylistsScreen(
             BackHeader("Плейлисты", navController)
             Spacer(modifier = Modifier.height(16.dp))
             if (playlists.isEmpty()) {
-                Text("Пока нет плейлистов", color = Color.Gray)
+                Text("Пока нет плейлистов", color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 LazyColumn {
                     items(playlists, key = { it.id }) { playlist ->
@@ -90,14 +91,14 @@ fun PlaylistsScreen(
                                 Text(
                                     playlist.name,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.Black,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     trackCountText(playlist.trackCount),
                                     fontSize = 12.sp,
-                                    color = Color.Gray
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }

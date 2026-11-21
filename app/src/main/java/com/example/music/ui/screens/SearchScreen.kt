@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -58,7 +59,7 @@ fun SearchScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
         BackHeader("Поиск", navController)
@@ -113,7 +114,7 @@ private fun SearchHistory(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("История поиска", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            Text("История поиска", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
             if (history.isNotEmpty()) {
                 TextButton(onClick = onClear) {
                     Text("Очистить")
@@ -122,7 +123,7 @@ private fun SearchHistory(
         }
         Spacer(modifier = Modifier.height(12.dp))
         if (history.isEmpty()) {
-            Text("История поиска пуста", color = Color.Gray)
+            Text("История поиска пуста", color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
             LazyColumn {
                 items(history) { item ->
@@ -133,9 +134,13 @@ private fun SearchHistory(
                             .padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.History, contentDescription = null, tint = Color.Gray)
+                        Icon(
+                            Icons.Default.History,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(item, color = Color.Black, fontSize = 16.sp)
+                        Text(item, color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp)
                     }
                 }
             }
@@ -189,19 +194,23 @@ private fun TrackList(
                     Text(
                         track.title,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onBackground,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         track.artist,
                         fontSize = 12.sp,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                Text(track.duration, fontSize = 12.sp, color = Color.Gray)
+                Text(
+                    track.duration,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
@@ -223,7 +232,7 @@ private fun MessageContent(message: String) {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(message, color = Color.Gray)
+        Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -237,7 +246,7 @@ private fun ErrorContent(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(message, color = Color.Gray)
+        Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
         TextButton(onClick = onRetry) {
             Text("Повторить")
         }

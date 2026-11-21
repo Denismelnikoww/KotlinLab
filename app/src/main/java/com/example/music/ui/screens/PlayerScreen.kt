@@ -25,6 +25,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -66,7 +67,7 @@ fun PlayerScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -140,13 +141,13 @@ private fun AddToPlaylistSheet(
                 "Добавить в плейлист",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onSurface
             )
             TextButton(onClick = onCreatePlaylist) {
                 Text("Создать плейлист")
             }
             if (playlists.isEmpty()) {
-                Text("Пока нет плейлистов", color = Color.Gray)
+                Text("Пока нет плейлистов", color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
                     items(playlists, key = { it.id }) { playlist ->
@@ -174,14 +175,14 @@ private fun AddToPlaylistSheet(
                                 Text(
                                     playlist.name,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.Black,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     trackCountText(playlist.trackCount),
                                     fontSize = 12.sp,
-                                    color = Color.Gray
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -225,7 +226,7 @@ private fun PlayerContent(
             track.title,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.Black,
+            color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
@@ -233,7 +234,7 @@ private fun PlayerContent(
         Text(
             track.artist,
             fontSize = 16.sp,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -249,7 +250,7 @@ private fun PlayerContent(
                 Icon(
                     Icons.Default.Add,
                     contentDescription = "Добавить в плейлист",
-                    tint = Color.Gray
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             IconButton(onClick = onToggleFavorite) {
@@ -264,7 +265,11 @@ private fun PlayerContent(
                     } else {
                         "Добавить в избранное"
                     },
-                    tint = if (track.isFavorite) Color(0xFFE91E63) else Color.Gray
+                    tint = if (track.isFavorite) {
+                        Color(0xFFE91E63)
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
                 )
             }
         }
@@ -275,8 +280,16 @@ private fun PlayerContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Длительность", color = Color.Gray, fontSize = 14.sp)
-            Text(track.duration, color = Color.Black, fontSize = 14.sp)
+            Text(
+                "Длительность",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 14.sp
+            )
+            Text(
+                track.duration,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 14.sp
+            )
         }
     }
 }
@@ -291,7 +304,11 @@ private fun ErrorContent(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(message, color = Color.Gray, textAlign = TextAlign.Center)
+        Text(
+            message,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
         TextButton(onClick = onRetry) {
             Text("Повторить")
         }

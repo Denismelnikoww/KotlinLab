@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,13 +46,13 @@ fun FavoritesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
         BackHeader("Избранное", navController)
         Spacer(modifier = Modifier.height(16.dp))
         if (favorites.isEmpty()) {
-            Text("Пока нет избранных треков", color = Color.Gray)
+            Text("Пока нет избранных треков", color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
             LazyColumn {
                 items(favorites, key = { it.id }) { track ->
@@ -83,19 +84,23 @@ fun FavoritesScreen(
                             Text(
                                 track.title,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
                                 track.artist,
                                 fontSize = 12.sp,
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        Text(track.duration, fontSize = 12.sp, color = Color.Gray)
+                        Text(
+                            track.duration,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }

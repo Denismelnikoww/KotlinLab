@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,7 +49,7 @@ fun PlaylistDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
         BackHeader(title, navController)
@@ -65,14 +66,14 @@ fun PlaylistDetailScreen(
                 PlaylistDetailUiState.NotFound -> Text(
                     "Плейлист не найден",
                     modifier = Modifier.align(Alignment.Center),
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 is PlaylistDetailUiState.Success -> {
                     if (currentState.tracks.isEmpty()) {
                         Text(
                             "В плейлисте пока нет треков",
                             modifier = Modifier.align(Alignment.Center),
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
                         TrackList(
@@ -119,19 +120,23 @@ private fun TrackList(
                     Text(
                         track.title,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onBackground,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         track.artist,
                         fontSize = 12.sp,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                Text(track.duration, fontSize = 12.sp, color = Color.Gray)
+                Text(
+                    track.duration,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
