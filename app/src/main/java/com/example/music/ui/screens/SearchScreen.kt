@@ -27,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -53,7 +52,7 @@ fun SearchScreen(
     viewModel: SearchViewModel = viewModel()
 ) {
     var query by remember { mutableStateOf("") }
-    val history = remember { mutableStateListOf("Yesterday", "Let It Be", "Hey Jude") }
+    val history by viewModel.history.collectAsStateWithLifecycle()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
@@ -85,10 +84,11 @@ fun SearchScreen(
             if (query.isBlank()) {
                 SearchHistory(
                     history = history,
-                    onQuerySelected = {
-                        query = it
-                        viewModel.onQueryChange(it)
-                    }
+                    onQuerySelected = { selected ->
+                        query = selected
+                        viewModel.onQuerySelected(selected)
+                    },
+                    onClear = viewModel::clearHistory
                 )
             } else {
                 SearchResults(
@@ -104,23 +104,39 @@ fun SearchScreen(
 @Composable
 private fun SearchHistory(
     history: List<String>,
-    onQuerySelected: (String) -> Unit
+    onQuerySelected: (String) -> Unit,
+    onClear: () -> Unit
 ) {
     Column {
-        Text("История поиска", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("История поиска", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            if (history.isNotEmpty()) {
+                TextButton(onClick = onClear) {
+                    Text("Очистить")
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(12.dp))
-        LazyColumn {
-            items(history) { item ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onQuerySelected(item) }
-                        .padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.History, contentDescription = null, tint = Color.Gray)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(item, color = Color.Black, fontSize = 16.sp)
+        if (history.isEmpty()) {
+            Text("История поиска пуста", color = Color.Gray)
+        } else {
+            LazyColumn {
+                items(history) { item ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onQuerySelected(item) }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.History, contentDescription = null, tint = Color.Gray)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(item, color = Color.Black, fontSize = 16.sp)
+                    }
                 }
             }
         }
