@@ -9,7 +9,10 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.example.music.MusicApp
 import com.example.music.data.repository.ITunesRepository
 import com.example.music.domain.models.Playlist
@@ -48,6 +51,9 @@ class PlayerViewModel(
 
     private val _playbackState = MutableStateFlow(PlaybackUiState())
     val playbackState: StateFlow<PlaybackUiState> = _playbackState.asStateFlow()
+
+    private val _positionMs = MutableStateFlow(0L)
+    val positionMs: StateFlow<Long> = _positionMs.asStateFlow()
 
     val playlists: StateFlow<List<Playlist>> = playlistsRepository.observePlaylists()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyList())
@@ -90,6 +96,7 @@ class PlayerViewModel(
         loadJob?.cancel()
         player?.stop()
         _playbackState.value = PlaybackUiState()
+        _positionMs.value = 0L
         loadJob = viewModelScope.launch {
             _uiState.value = PlayerUiState.Loading
             track = tracksRepository.getTrack(trackId)
@@ -150,7 +157,7 @@ class PlayerViewModel(
         if (!state.hasPreview) return
         val target = positionMs.coerceIn(0L, state.durationMs)
         exoPlayer.seekTo(target)
-        _playbackState.update { it.copy(positionMs = target) }
+        _positionMs.value = target
     }
 
     fun pause() {
@@ -163,6 +170,7 @@ class PlayerViewModel(
         exoPlayer?.clearMediaItems()
         val previewUrl = currentTrack.previewUrl
         _playbackState.value = PlaybackUiState(hasPreview = previewUrl != null)
+        _positionMs.value = 0L
         if (previewUrl == null) return
         obtainPlayer().apply {
             setMediaItem(
@@ -179,27 +187,44 @@ class PlayerViewModel(
         }
     }
 
-    private fun obtainPlayer(): ExoPlayer = player ?: ExoPlayer.Builder(getApplication())
-        .build()
-        .apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
-                    .setUsage(C.USAGE_MEDIA)
-                    .build(),
-                true
+    private fun obtainPlayer(): ExoPlayer = player ?: run {
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+            .setUserAgent(USER_AGENT)
+            .setConnectTimeoutMs(HTTP_TIMEOUT_MS)
+            .setReadTimeoutMs(HTTP_TIMEOUT_MS)
+            .setAllowCrossProtocolRedirects(true)
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                MIN_BUFFER_MS,
+                MAX_BUFFER_MS,
+                BUFFER_FOR_PLAYBACK_MS,
+                BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS
             )
-            setHandleAudioBecomingNoisy(true)
-            addListener(playerListener)
-        }
-        .also { player = it }
+            .build()
+        ExoPlayer.Builder(getApplication())
+            .setMediaSourceFactory(DefaultMediaSourceFactory(httpDataSourceFactory))
+            .setLoadControl(loadControl)
+            .build()
+            .apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                        .setUsage(C.USAGE_MEDIA)
+                        .build(),
+                    true
+                )
+                setHandleAudioBecomingNoisy(true)
+                addListener(playerListener)
+            }
+            .also { player = it }
+    }
 
     private fun startProgressUpdates() {
         progressJob?.cancel()
         progressJob = viewModelScope.launch {
             while (isActive) {
                 val exoPlayer = player ?: break
-                _playbackState.update { it.copy(positionMs = exoPlayer.currentPosition) }
+                _positionMs.value = exoPlayer.currentPosition
                 delay(PROGRESS_UPDATE_MS)
             }
         }
@@ -229,6 +254,12 @@ class PlayerViewModel(
         const val TRACK_ID_KEY = "trackId"
         const val STOP_TIMEOUT_MS = 5_000L
         const val PROGRESS_UPDATE_MS = 500L
+        const val MIN_BUFFER_MS = 30_000
+        const val MAX_BUFFER_MS = 60_000
+        const val BUFFER_FOR_PLAYBACK_MS = 1_000
+        const val BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS = 2_000
+        const val HTTP_TIMEOUT_MS = 15_000
+        const val USER_AGENT = "MusicApp/1.0"
         const val ERROR_MESSAGE = "Не удалось загрузить трек. Проверьте подключение к интернету"
     }
 }
