@@ -60,6 +60,7 @@ import com.example.music.ui.screens.player.PlaybackUiState
 import com.example.music.ui.screens.player.PlayerUiState
 import com.example.music.ui.screens.player.PlayerViewModel
 import java.util.Locale
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun PlayerScreen(
@@ -109,6 +110,7 @@ fun PlayerScreen(
                 is PlayerUiState.Success -> PlayerContent(
                     track = currentState.track,
                     playback = playback,
+                    positionMs = viewModel.positionMs,
                     onToggleFavorite = viewModel::toggleFavorite,
                     onAddToPlaylist = { showPlaylistSheet = true },
                     onTogglePlayPause = viewModel::togglePlayPause,
@@ -207,6 +209,7 @@ private fun AddToPlaylistSheet(
 private fun PlayerContent(
     track: Track,
     playback: PlaybackUiState,
+    positionMs: StateFlow<Long>,
     onToggleFavorite: () -> Unit,
     onAddToPlaylist: () -> Unit,
     onTogglePlayPause: () -> Unit,
@@ -249,6 +252,7 @@ private fun PlayerContent(
 
         PlaybackControls(
             playback = playback,
+            positionMs = positionMs,
             onTogglePlayPause = onTogglePlayPause,
             onSeek = onSeek
         )
@@ -294,6 +298,7 @@ private fun PlayerContent(
 @Composable
 private fun PlaybackControls(
     playback: PlaybackUiState,
+    positionMs: StateFlow<Long>,
     onTogglePlayPause: () -> Unit,
     onSeek: (Long) -> Unit
 ) {
@@ -314,9 +319,10 @@ private fun PlaybackControls(
         return
     }
 
+    val currentPositionMs by positionMs.collectAsStateWithLifecycle()
     var dragPosition by remember { mutableStateOf<Float?>(null) }
     val duration = playback.durationMs.coerceAtLeast(1L)
-    val progress = (dragPosition ?: (playback.positionMs.toFloat() / duration)).coerceIn(0f, 1f)
+    val progress = (dragPosition ?: (currentPositionMs.toFloat() / duration)).coerceIn(0f, 1f)
     val displayedPosition = (progress * duration).toLong()
 
     Column(modifier = Modifier.fillMaxWidth()) {
