@@ -10,70 +10,89 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.music.data.repository.MusicRepository
 import com.example.music.ui.components.BackHeader
+import com.example.music.ui.components.CreatePlaylistDialog
+import com.example.music.ui.components.TrackArtwork
+import com.example.music.ui.components.trackCountText
+import com.example.music.ui.screens.playlists.PlaylistsViewModel
 
 @Composable
-fun PlaylistsScreen(navController: NavController) {
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .background(Color.White)) {
-        Column(modifier = Modifier
+fun PlaylistsScreen(
+    navController: NavController,
+    viewModel: PlaylistsViewModel = viewModel()
+) {
+    val playlists by viewModel.playlists.collectAsStateWithLifecycle()
+    var showCreateDialog by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)) {
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
             BackHeader("Плейлисты", navController)
             Spacer(modifier = Modifier.height(16.dp))
-            LazyColumn {
-                items(MusicRepository.allPlaylists) { playlist ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { navController.navigate("playlist/${playlist.id}") }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
+            if (playlists.isEmpty()) {
+                Text("Пока нет плейлистов", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                LazyColumn {
+                    items(playlists, key = { it.id }) { playlist ->
+                        Row(
                             modifier = Modifier
-                                .size(48.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(Color.LightGray),
-                            contentAlignment = Alignment.Center
+                                .fillMaxWidth()
+                                .clickable { navController.navigate("playlist/${playlist.id}") }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                Icons.Default.MusicNote,
-                                contentDescription = null,
-                                tint = Color.White
-                            )
-                        }
-                        Column(modifier = Modifier.padding(start = 12.dp)) {
-                            Text(playlist.name, fontWeight = FontWeight.Bold, color = Color.Black)
-                            Text(playlist.count, fontSize = 12.sp, color = Color.Gray)
+                            TrackArtwork(artworkUrl = playlist.artworkUrl)
+                            Column(modifier = Modifier.padding(start = 12.dp)) {
+                                Text(
+                                    playlist.name,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    trackCountText(playlist.trackCount),
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
             }
         }
         FloatingActionButton(
-            onClick = { },
+            onClick = { showCreateDialog = true },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
@@ -81,5 +100,15 @@ fun PlaylistsScreen(navController: NavController) {
         ) {
             Icon(Icons.Default.Add, contentDescription = "Добавить", tint = Color.White)
         }
+    }
+
+    if (showCreateDialog) {
+        CreatePlaylistDialog(
+            onDismiss = { showCreateDialog = false },
+            onCreate = { name, description ->
+                viewModel.createPlaylist(name, description)
+                showCreateDialog = false
+            }
+        )
     }
 }
