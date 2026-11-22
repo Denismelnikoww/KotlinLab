@@ -16,7 +16,17 @@ interface PlaylistsDao {
 
     @Query(
         """
-        SELECT playlists.*, COUNT(playlist_tracks.trackId) AS trackCount
+        SELECT playlists.*,
+               COUNT(playlist_tracks.trackId) AS trackCount,
+               (
+                   SELECT tracks.artworkUrl
+                   FROM playlist_tracks
+                   INNER JOIN tracks ON tracks.id = playlist_tracks.trackId
+                   WHERE playlist_tracks.playlistId = playlists.id
+                     AND tracks.artworkUrl IS NOT NULL
+                   ORDER BY tracks.trackName
+                   LIMIT 1
+               ) AS firstTrackArtwork
         FROM playlists
         LEFT JOIN playlist_tracks ON playlists.id = playlist_tracks.playlistId
         GROUP BY playlists.id

@@ -10,7 +10,7 @@ fun PlaylistWithTrackCount.toDomain(): Playlist = Playlist(
     name = playlist.name,
     description = playlist.description,
     trackCount = trackCount,
-    artworkUrl = playlist.artworkUrl
+    artworkUrl = playlist.artworkUrl ?: firstTrackArtwork
 )
 
 fun PlaylistWithTracks.toDomain(): PlaylistDetails = PlaylistDetails(

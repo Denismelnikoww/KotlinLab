@@ -5,5 +5,6 @@ import com.example.music.data.db.entity.PlaylistEntity
 
 data class PlaylistWithTrackCount(
     @Embedded val playlist: PlaylistEntity,
-    val trackCount: Int
+    val trackCount: Int,
+    val firstTrackArtwork: String? = null
 )
